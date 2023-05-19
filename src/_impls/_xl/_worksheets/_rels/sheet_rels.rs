@@ -75,6 +75,7 @@ impl Replace for Relationships {
                         let _ = writer.write_event(Event::End(e.clone()));
                     }
                 }
+                Ok(Event::Empty(_)) => (),
                 Ok(Event::Eof) => break,
                 Ok(e) => {
                     let _ = writer.write_event(e);

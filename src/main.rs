@@ -4,10 +4,12 @@ use replace_xlsx::_structs::_xl::_drawings::drawing::XdrWsDr;
 use replace_xlsx::_structs::_xl::_worksheets::_rels::sheet_rels::Relationships as SheetRelationships;
 use replace_xlsx::_structs::_xl::_worksheets::sheet::worksheet;
 use replace_xlsx::_structs::_xl::shared_strings;
+use replace_xlsx::_structs::content_types::Types;
 use replace_xlsx::_structs::input::{Input, Inputs};
 use replace_xlsx::_structs::replace::Replaces;
 use replace_xlsx::_structs::zip::XlsxReader;
 use replace_xlsx::_structs::zip::XlsxWriter;
+use replace_xlsx::_traits::content_types::AddType;
 use replace_xlsx::_traits::input::Convert;
 use replace_xlsx::_traits::replace::Extract;
 use replace_xlsx::_traits::replace::Replace;
@@ -32,6 +34,7 @@ fn main() {
     let mut replaces: Replaces = inputs.convert();
     let args: Args = Args::parse();
     let template: &str = args.template.as_str();
+    let output: &str = args.out.as_str();
 
     let mut reader: XlsxReader = XlsxReader::new(template).expect("Faild to Xlsx reader error");
     replaces
@@ -67,26 +70,36 @@ fn main() {
         .replace(&replaces)
         .expect("Faild to replace xdr_ws_dr");
 
+    let mut content_types: Types = Types::new(&mut reader).expect("Faild to create content_types");
+
     // Write
-    let mut writer: XlsxWriter = XlsxWriter::new("out.xlsx").expect("XlsxWriter error");
+    let mut writer: XlsxWriter = XlsxWriter::new(output).expect("XlsxWriter error");
 
     let options = FileOptions::default()
-        .compression_method(zip::CompressionMethod::Stored)
+        .compression_method(zip::CompressionMethod::Deflated)
+        .compression_level(None)
         .unix_permissions(0o755);
 
     // 書き出し処理
     for i in 0..reader.len() {
         let file = reader.by_index(i).unwrap();
-        writer.start_file(file.name(), options).unwrap();
+        if file.name() == "[Content_Types].xml" {
+            continue;
+        }
+        let _ = content_types.add_override(file.name());
         if file.name() == "xl/sharedStrings.xml" {
+            writer.start_file(file.name(), options).unwrap();
             writer.write_all(shared_strings_xml.as_slice()).unwrap();
         } else if file.name() == "xl/drawings/_rels/drawing1.xml.rels" {
+            writer.start_file(file.name(), options).unwrap();
             writer
                 .write_all(drawing_relationships_xml.as_slice())
                 .unwrap();
         } else if file.name() == "xl/drawings/drawing1.xml" {
+            writer.start_file(file.name(), options).unwrap();
             writer.write_all(xdr_ws_dr_xml.as_slice()).unwrap();
         } else if file.name() == "xl/worksheets/sheet1.xml" {
+            writer.start_file(file.name(), options).unwrap();
             writer.write_all(worksheet_xml.as_slice()).unwrap();
         } else {
             writer.raw_copy_file(file).unwrap();
@@ -98,6 +111,7 @@ fn main() {
             .start_file("xl/drawings/drawing1.xml", options)
             .unwrap();
         writer.write_all(xdr_ws_dr_xml.as_slice()).unwrap();
+        let _ = content_types.add_override("xl/drawings/drawing1.xml");
     }
     if reader
         .by_name("xl/drawings/_rels/drawing1.xml.rels")
@@ -109,6 +123,7 @@ fn main() {
         writer
             .write_all(drawing_relationships_xml.as_slice())
             .unwrap();
+        let _ = content_types.add_override("xl/drawings/_rels/drawing1.xml.rels");
     }
     if reader
         .by_name("xl/worksheets/_rels/sheet1.xml.rels")
@@ -120,6 +135,7 @@ fn main() {
         writer
             .write_all(sheet_relationships_xml.as_slice())
             .unwrap();
+        let _ = content_types.add_override("xl/worksheets/_rels/sheet1.xml.rels");
     }
 
     for replace in replaces.iter() {
@@ -127,12 +143,23 @@ fn main() {
             Input::Text { from: _, to: _ } => (),
             Input::Image { from: _, to } => match &replace.image {
                 None => (),
-                Some(image) => image
-                    .dist(to.to_string(), &mut writer, options)
-                    .expect("image dist error"),
+                Some(image) => {
+                    let _ = content_types.add_default(&image.ext);
+                    image
+                        .dist(to.to_string(), &mut writer, options)
+                        .expect("image dist error");
+                }
             },
         }
     }
+
+    // Content_Types.xml書き込み
+    let content_types_xml = content_types
+        .replace(&replaces)
+        .expect("Faild to replace content_types");
+    writer.start_file("[Content_Types].xml", options).unwrap();
+    writer.write_all(content_types_xml.as_slice()).unwrap();
+
     writer.finish().unwrap();
 }
 

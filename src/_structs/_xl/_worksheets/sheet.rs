@@ -35,7 +35,7 @@ pub struct C {
     #[serde(rename = "@r")]
     pub r: String,
     #[serde(rename = "@s")]
-    s: String,
+    s: Option<String>,
     #[serde(rename = "@t", skip_serializing_if = "Option::is_none")]
     pub t: Option<String>,
     pub v: Option<V>,

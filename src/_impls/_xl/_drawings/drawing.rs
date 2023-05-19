@@ -1,8 +1,7 @@
 use crate::_structs::_xl::_drawings::drawing::{
-    AAvLst, ABlip, AFillRect, APrstGeom, AStretch, XdrBlipFill, XdrCNvPicPr, XdrCNvPr,
+    AAvLst, ABlip, AExt, ALn, AOff, APrstGeom, AStretch, AXfrm, XdrBlipFill, XdrCNvPicPr, XdrCNvPr,
     XdrClientData, XdrCol, XdrColOff, XdrExt, XdrFrom, XdrNvPicPr, XdrOneCellAnchor, XdrPic,
-    XdrRow, XdrRowOff, XdrSpPr, XdrWsDr, XMLNS_A, XMLNS_C, XMLNS_CX, XMLNS_CX1, XMLNS_DGM,
-    XMLNS_MC, XMLNS_R, XMLNS_SLE15, XMLNS_X3UNK, XMLNS_XDR,
+    XdrRow, XdrRowOff, XdrSpPr, XdrWsDr, XMLNS_A, XMLNS_R, XMLNS_XDR, XML_DECLARATION,
 };
 use crate::_structs::input::Input;
 use crate::_structs::replace::Replaces;
@@ -27,13 +26,6 @@ impl XdrWsDr {
             xmlns_xdr: Some(XMLNS_XDR.to_string()),
             xmlns_a: Some(XMLNS_A.to_string()),
             xmlns_r: Some(XMLNS_R.to_string()),
-            xmlns_c: Some(XMLNS_C.to_string()),
-            xmlns_cx: Some(XMLNS_CX.to_string()),
-            xmlns_cx1: Some(XMLNS_CX1.to_string()),
-            xmlns_mc: Some(XMLNS_MC.to_string()),
-            xmlns_dgm: Some(XMLNS_DGM.to_string()),
-            xmlns_x3Unk: Some(XMLNS_X3UNK.to_string()),
-            xmlns_sle15: Some(XMLNS_SLE15.to_string()),
             oneCellAnchor: None,
             xml: None,
         };
@@ -42,10 +34,9 @@ impl XdrWsDr {
         } else {
             drawing = from_str::<XdrWsDr>(buf.as_str())?;
         }
-        drawing.xml = Some(buf);
+        drawing.xml = Some(format!("{}{}", XML_DECLARATION, buf));
         Ok(drawing)
     }
-
 }
 
 impl Replace for XdrWsDr {
@@ -56,7 +47,10 @@ impl Replace for XdrWsDr {
         reader.trim_text(true);
         let mut buf = Vec::new();
 
-        fn replace_exec(replaces: &Replaces, writer: &mut Writer<Cursor<Vec<u8>>>) -> anyhow::Result<()> {
+        fn replace_exec(
+            replaces: &Replaces,
+            writer: &mut Writer<Cursor<Vec<u8>>>,
+        ) -> anyhow::Result<()> {
             for replace in replaces.iter() {
                 match replace.input {
                     Input::Text { from: _, to: _ } => (),
@@ -66,8 +60,7 @@ impl Replace for XdrWsDr {
                             None => (),
                             Some(id) => {
                                 for cell in replace.cells.iter() {
-                                    let image_name =
-                                        image.name.clone().expect("Image name empty");
+                                    let image_name = image.name.clone().expect("Image name empty");
                                     let emu = 914400;
                                     let dpi = 72;
                                     let mut ratio = 1.0;
@@ -93,9 +86,7 @@ impl Replace for XdrWsDr {
                                         id.to_string(),
                                     );
                                     let _ = writer.write_event(Event::Text(
-                                        BytesText::from_escaped(to_string(
-                                            &xdr_one_cell_anchor,
-                                        )?),
+                                        BytesText::from_escaped(to_string(&xdr_one_cell_anchor)?),
                                     ));
                                 }
                             }
@@ -113,10 +104,12 @@ impl Replace for XdrWsDr {
                         let _ = writer.write_event(Event::Start(e.borrow()));
                         let _ = replace_exec(replaces, &mut writer)?;
                         let _ = writer.write_event(Event::End(e.to_end()));
+                    } else if e.name().as_ref() == b"xdr:oneCellAnchor" {
+                        ()
                     } else {
                         let _ = writer.write_event(Event::Empty(e.borrow()));
                     }
-                },
+                }
                 Ok(Event::End(e)) => {
                     if e.name().as_ref() == b"xdr:wsDr" {
                         let _ = replace_exec(replaces, &mut writer)?;
@@ -156,35 +149,39 @@ impl XdrOneCellAnchor {
                 rowOff: XdrRowOff { value: row_off },
             },
             ext: XdrExt { cx, cy },
+            clientData: XdrClientData {
+                fLocksWithSheet: None,
+            },
             pic: XdrPic {
                 nvPicPr: XdrNvPicPr {
                     cNvPr: XdrCNvPr {
                         id: 0,
                         name: name,
-                        title: "".to_string(),
+                        descr: "".to_string(),
+                        v: "".to_string(),
                     },
-                    cNvPicPr: XdrCNvPicPr {
-                        preferRelativeResize: 0,
-                    },
+                    cNvPicPr: XdrCNvPicPr::default(),
                 },
                 blipFill: XdrBlipFill {
                     blip: ABlip {
-                        cstate: "".to_string(),
+                        cstate: None,
                         embed: embed,
+                        v: "".to_string(),
                     },
-                    stretch: AStretch {
-                        fillRect: AFillRect {},
-                    },
+                    stretch: AStretch { fillRect: None },
                 },
                 spPr: XdrSpPr {
+                    axfrm: Some(AXfrm {
+                        aoff: AOff { x: 0, y: 0 },
+                        aext: AExt { cx, cy },
+                    }),
                     prstGeom: APrstGeom {
-                        prst: "".to_string(),
+                        prst: "rect".to_string(),
                         avLst: AAvLst {},
                     },
-                    noFill: None,
+                    a_ln: Some(ALn { w: 0, noFill: None }),
                 },
             },
-            clientData: XdrClientData { fLocksWithSheet: 0 },
         }
     }
 }

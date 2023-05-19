@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-pub const XML_DECLARATION: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#;
+pub const XML_DECLARATION: &str = r#"<?xml version="1.0" encoding="UTF-8"?>"#;
 pub const RELATION_TYPE: &str =
     r#"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"#;
 pub const RELATION_SHIPS_XMLNS: &str =
@@ -11,7 +11,8 @@ pub const RELATION_SHIPS_XMLNS: &str =
 pub struct Relationships {
     #[serde(rename = "@xmlns")]
     pub xmlns: String,
-    pub Relationship: Option<Vec<Relationship>>,
+    #[serde(rename(serialize = "Relationship", deserialize = "Relationship"))]
+    pub relationships: Option<Vec<Relationship>>,
     #[serde(skip)]
     pub xml: Option<String>,
 }

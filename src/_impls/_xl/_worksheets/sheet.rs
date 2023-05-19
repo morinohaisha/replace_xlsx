@@ -65,7 +65,7 @@ impl Row for sheet::Row {
                     if v.v == index.to_string() {
                         cells.push(Cell::new(&cell.r));
                     }
-                },
+                }
             }
         }
         cells

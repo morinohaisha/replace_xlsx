@@ -55,7 +55,7 @@ impl Extract for Replaces<'_> {
         let drawing_rels: drawing_rels::Relationships =
             drawing_rels::Relationships::new(1, reader)?;
         let mut index = drawing_rels
-            .Relationship
+            .relationships
             .map_or(0, |relationship_lst| relationship_lst.len());
         for replace in self.iter_mut() {
             match replace.input {

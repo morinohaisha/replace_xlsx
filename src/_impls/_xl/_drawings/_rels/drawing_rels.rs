@@ -21,7 +21,7 @@ impl Relationships {
         reader.get_file(&file, &mut buf)?;
         let mut drawing_rels: Relationships = Relationships {
             xmlns: RELATION_SHIPS_XMLNS.to_string(),
-            Relationship: None,
+            relationships: None,
             xml: None,
         };
         if buf.len() == 0 {
@@ -81,6 +81,7 @@ impl Replace for Relationships {
                         let _ = writer.write_event(Event::End(e.clone()));
                     }
                 }
+                Ok(Event::Empty(_)) => (),
                 Ok(Event::Eof) => break,
                 Ok(e) => {
                     let _ = writer.write_event(e);

@@ -1,17 +1,11 @@
 #![allow(non_snake_case)]
 use serde::{Deserialize, Serialize};
 
+pub const XML_DECLARATION: &str = r#"<?xml version="1.0" encoding="UTF-8"?>"#;
 pub const XMLNS_XDR: &str =
     r#"http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing"#;
 pub const XMLNS_A: &str = r#"http://schemas.openxmlformats.org/drawingml/2006/main"#;
 pub const XMLNS_R: &str = r#"http://schemas.openxmlformats.org/officeDocument/2006/relationships"#;
-pub const XMLNS_C: &str = r#"http://schemas.openxmlformats.org/drawingml/2006/chart"#;
-pub const XMLNS_CX: &str = r#"http://schemas.microsoft.com/office/drawing/2014/chartex"#;
-pub const XMLNS_CX1: &str = r#"http://schemas.microsoft.com/office/drawing/2015/9/8/chartex"#;
-pub const XMLNS_MC: &str = r#"http://schemas.openxmlformats.org/markup-compatibility/2006"#;
-pub const XMLNS_DGM: &str = r#"http://schemas.openxmlformats.org/drawingml/2006/diagram"#;
-pub const XMLNS_X3UNK: &str = r#"http://schemas.microsoft.com/office/drawing/2010/slicer"#;
-pub const XMLNS_SLE15: &str = r#"http://schemas.microsoft.com/office/drawing/2012/slicer"#;
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename = "xdr:wsDr")]
@@ -22,21 +16,6 @@ pub struct XdrWsDr {
     pub xmlns_a: Option<String>,
     #[serde(rename = "@xmlns:r")]
     pub xmlns_r: Option<String>,
-    #[serde(rename = "@xmlns:c")]
-    pub xmlns_c: Option<String>,
-    #[serde(rename = "@xmlns:cx")]
-    pub xmlns_cx: Option<String>,
-    #[serde(rename = "@xmlns:cx1")]
-    pub xmlns_cx1: Option<String>,
-    #[serde(rename = "@xmlns:mc")]
-    pub xmlns_mc: Option<String>,
-    #[serde(rename = "@xmlns:dgm")]
-    pub xmlns_dgm: Option<String>,
-    #[serde(rename = "@xmlns:x3Unk")]
-    pub xmlns_x3Unk: Option<String>,
-    #[serde(rename = "@xmlns:sle15")]
-    pub xmlns_sle15: Option<String>,
-
     #[serde(rename(serialize = "xdr:oneCellAnchor"))]
     pub oneCellAnchor: Option<Vec<XdrOneCellAnchor>>,
     #[serde(skip)]
@@ -133,15 +112,20 @@ pub struct XdrCNvPr {
     pub id: u32,
     #[serde(rename = "@name")]
     pub name: String,
-    #[serde(rename = "@title")]
-    pub title: String,
+    #[serde(rename = "@descr")]
+    pub descr: String,
+    #[serde(rename = "$text")]
+    pub v: String,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename = "xdr:cNvPicPr")]
 pub struct XdrCNvPicPr {
-    #[serde(rename = "@preferRelativeResize")]
-    pub preferRelativeResize: u32,
+    #[serde(
+        rename = "@preferRelativeResize",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub preferRelativeResize: Option<u32>,
     //
 }
 
@@ -157,17 +141,19 @@ pub struct XdrBlipFill {
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename = "a:blip")]
 pub struct ABlip {
-    #[serde(rename = "@cstate")]
-    pub cstate: String,
+    #[serde(rename = "@cstate", skip_serializing_if = "Option::is_none")]
+    pub cstate: Option<String>,
     #[serde(rename(deserialize = "@embed", serialize = "@r:embed"))]
     pub embed: String,
+    #[serde(rename = "$text")]
+    pub v: String,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename = "a:stretch")]
 pub struct AStretch {
     #[serde(rename(serialize = "a:fillRect"))]
-    pub fillRect: AFillRect,
+    pub fillRect: Option<AFillRect>,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
@@ -177,10 +163,47 @@ pub struct AFillRect {}
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename = "xdr:spPr")]
 pub struct XdrSpPr {
+    #[serde(rename(serialize = "a:xfrm"))]
+    pub axfrm: Option<AXfrm>,
     #[serde(rename(serialize = "a:prstGeom"))]
     pub prstGeom: APrstGeom,
+    #[serde(rename(serialize = "a:ln"))]
+    pub a_ln: Option<ALn>,
+}
+
+#[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
+#[serde(rename = "a:ln")]
+pub struct ALn {
+    #[serde(rename = "@w")]
+    pub w: u32,
     #[serde(rename(serialize = "a:noFill"))]
     pub noFill: Option<ANoFill>,
+}
+
+#[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
+#[serde(rename = "a:xfrm")]
+pub struct AXfrm {
+    #[serde(rename(serialize = "a:off"))]
+    pub aoff: AOff,
+    #[serde(rename(serialize = "a:ext"))]
+    pub aext: AExt,
+}
+
+#[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
+#[serde(rename = "a:off")]
+pub struct AOff {
+    #[serde(rename = "@x")]
+    pub x: u32,
+    #[serde(rename = "@y")]
+    pub y: u32,
+}
+#[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
+#[serde(rename = "a:ext")]
+pub struct AExt {
+    #[serde(rename = "@cx")]
+    pub cx: u32,
+    #[serde(rename = "@cy")]
+    pub cy: u32,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
@@ -203,8 +226,8 @@ pub struct ANoFill {}
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
 #[serde(rename = "xdr:clientData")]
 pub struct XdrClientData {
-    #[serde(rename = "@fLocksWithSheet")]
-    pub fLocksWithSheet: usize,
+    #[serde(rename = "@fLocksWithSheet", skip_serializing_if = "Option::is_none")]
+    pub fLocksWithSheet: Option<usize>,
 }
 
 #[cfg(test)]
@@ -240,7 +263,9 @@ mod tests {
                 <a:prstGeom prst="rect">
                     <a:avLst/>
                 </a:prstGeom>
-                <a:noFill/>
+                <a:ln w="0">
+                    <a:noFill/>
+                </a:ln>
             </xdr:spPr>
         </xdr:pic>
         <xdr:clientData fLocksWithSheet="0"/>

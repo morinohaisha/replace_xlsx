@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-pub const XML_DECLARATION: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>"#;
+pub const XML_DECLARATION: &str = r#"<?xml version="1.0" encoding="UTF-8"?>"#;
 pub const RELATION_TYPE: &str =
     r#"http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing"#;
 pub const RELATION_SHIPS_XMLNS: &str =

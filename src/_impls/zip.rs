@@ -48,7 +48,7 @@ impl XlsxArchive for XlsxReader {
 }
 
 impl XlsxWriter {
-    pub fn new(out_file: &'static str) -> anyhow::Result<XlsxWriter> {
+    pub fn new(out_file: &str) -> anyhow::Result<XlsxWriter> {
         let outputzipfile = std::fs::File::create(std::path::Path::new(&out_file))?;
         let writer = zip::ZipWriter::new(outputzipfile);
         Ok(XlsxWriter { writer })
@@ -58,6 +58,11 @@ impl XlsxWriter {
 impl XlsxWrite for XlsxWriter {
     fn start_file(&mut self, file_name: &str, options: FileOptions) -> anyhow::Result<()> {
         self.writer.start_file(file_name, options)?;
+        Ok(())
+    }
+
+    fn add_directory(&mut self, file_name: &str, options: FileOptions) -> anyhow::Result<()> {
+        self.writer.add_directory(file_name, options)?;
         Ok(())
     }
 

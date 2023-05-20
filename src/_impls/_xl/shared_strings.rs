@@ -1,11 +1,12 @@
 use crate::_structs::_xl::shared_strings::{self, si};
 use crate::_structs::input::Input;
 use crate::_structs::replace::Replaces;
+use crate::_structs::replace::ReplaceXml;
 use crate::_structs::xml::XmlReader;
-use crate::_structs::zip::XlsxReader;
+use crate::_structs::xlsx_reader::XlsxReader;
 use crate::_traits::_xl::shared_strings::{Si, Sst, T};
 use crate::_traits::replace::Replace;
-use crate::_traits::zip::XlsxArchive;
+use crate::_traits::xlsx_reader::XlsxArchive;
 use anyhow::Context;
 use quick_xml::de::from_str;
 use quick_xml::events::{BytesText, Event};
@@ -17,15 +18,16 @@ use std::io::{BufWriter, Cursor, Write};
 impl shared_strings::sst {
     pub fn new(reader: &mut XlsxReader) -> anyhow::Result<shared_strings::sst> {
         let mut buf: String = String::new();
-        reader.get_file("xl/sharedStrings.xml", &mut buf)?;
+        reader.get_file(shared_strings::FILE_NAME, &mut buf)?;
         let mut sst: shared_strings::sst = from_str(buf.as_str())?;
         sst.xml = Some(buf);
+        sst.file_name = shared_strings::FILE_NAME.to_string();
         Ok(sst)
     }
 }
 
 impl Replace for shared_strings::sst {
-    fn replace(&mut self, replaces: &Replaces) -> anyhow::Result<Vec<u8>> {
+    fn replace(&mut self, replaces: &Replaces) -> anyhow::Result<ReplaceXml> {
         let mut writer = Writer::new(Cursor::new(Vec::<u8>::new()));
         let xml: String = self.xml.clone().context("xml is empty")?;
         let mut reader = XmlReader::new(&xml); // xml文字からreader生成
@@ -76,7 +78,7 @@ impl Replace for shared_strings::sst {
             }
             buf.clear();
         }
-        Ok(writer.into_inner().into_inner())
+        Ok(ReplaceXml {file_name: self.file_name.clone(), xml: writer.into_inner().into_inner()})
     }
 }
 

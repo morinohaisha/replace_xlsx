@@ -20,6 +20,8 @@ pub struct XdrWsDr {
     pub oneCellAnchor: Option<Vec<XdrOneCellAnchor>>,
     #[serde(skip)]
     pub xml: Option<String>,
+    #[serde(skip)]
+    pub file_name: String,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]

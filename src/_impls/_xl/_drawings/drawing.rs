@@ -4,11 +4,11 @@ use crate::_structs::_xl::_drawings::drawing::{
     XdrRow, XdrRowOff, XdrSpPr, XdrWsDr, XMLNS_A, XMLNS_R, XMLNS_XDR, XML_DECLARATION,
 };
 use crate::_structs::input::Input;
-use crate::_structs::replace::Replaces;
+use crate::_structs::replace::{Replaces, ReplaceXml};
 use crate::_structs::xml::XmlReader;
-use crate::_structs::zip::XlsxReader;
+use crate::_structs::xlsx_reader::XlsxReader;
 use crate::_traits::replace::Replace;
-use crate::_traits::zip::XlsxArchive;
+use crate::_traits::xlsx_reader::XlsxArchive;
 use anyhow::Context;
 use quick_xml::de::from_str;
 use quick_xml::events::{BytesText, Event};
@@ -20,14 +20,15 @@ use std::io::{BufWriter, Cursor, Write};
 impl XdrWsDr {
     pub fn new(num: u32, reader: &mut XlsxReader) -> anyhow::Result<XdrWsDr> {
         let mut buf: String = String::new();
-        let file = format!("xl/drawings/drawing{}.xml", num);
-        reader.get_file(&file, &mut buf)?;
+        let file_name = format!("xl/drawings/drawing{}.xml", num);
+        reader.get_file(&file_name, &mut buf)?;
         let mut drawing: XdrWsDr = XdrWsDr {
             xmlns_xdr: Some(XMLNS_XDR.to_string()),
             xmlns_a: Some(XMLNS_A.to_string()),
             xmlns_r: Some(XMLNS_R.to_string()),
             oneCellAnchor: None,
             xml: None,
+            file_name,
         };
         if buf.len() == 0 {
             buf = to_string(&drawing)?;
@@ -40,7 +41,7 @@ impl XdrWsDr {
 }
 
 impl Replace for XdrWsDr {
-    fn replace(&mut self, replaces: &Replaces) -> anyhow::Result<Vec<u8>> {
+    fn replace(&mut self, replaces: &Replaces) -> anyhow::Result<ReplaceXml> {
         let mut writer: Writer<Cursor<Vec<u8>>> = Writer::new(Cursor::new(Vec::<u8>::new()));
         let xml: String = self.xml.clone().context("xml is empty")?;
         let mut reader = XmlReader::new(&xml); // xml文字からreader生成
@@ -126,7 +127,7 @@ impl Replace for XdrWsDr {
             }
             buf.clear();
         }
-        Ok(writer.into_inner().into_inner())
+        Ok(ReplaceXml {file_name: self.file_name.clone(), xml: writer.into_inner().into_inner()})
     }
 }
 

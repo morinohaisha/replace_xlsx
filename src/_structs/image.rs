@@ -1,5 +1,5 @@
-use crate::_structs::zip::XlsxWriter;
-use crate::_traits::zip::XlsxWrite;
+use crate::_structs::xlsx_writer::XlsxWriter;
+use crate::_traits::xlsx_writer::XlsxWrite;
 use image::io::Reader;
 use std::ffi::OsStr;
 use std::fs::File;

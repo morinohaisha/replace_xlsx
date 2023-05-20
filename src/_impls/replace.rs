@@ -3,12 +3,13 @@ use crate::_structs::_xl::_worksheets::sheet;
 use crate::_structs::_xl::shared_strings;
 use crate::_structs::image::Image;
 use crate::_structs::input::Input;
-use crate::_structs::replace::{Replace, Replaces};
-use crate::_structs::zip::XlsxReader;
+use crate::_structs::replace::{Replace, Replaces, ReplaceXmls};
+use crate::_structs::xlsx_reader::XlsxReader;
 use crate::_traits::_xl::_worksheets::sheet::Worksheet;
 use crate::_traits::_xl::shared_strings::Sst;
 use crate::_traits::replace::Extract;
 use crate::_traits::replace::GetReplace;
+use crate::_traits::replace::IsSkip;
 
 impl Replace<'_> {
     pub fn new(input: &Input) -> Replace {
@@ -80,5 +81,16 @@ impl GetReplace for Replaces<'_> {
             }
         }
         None
+    }
+}
+
+impl IsSkip for ReplaceXmls {
+    fn is_skip(&self, file_name: &str) -> bool {
+        for replxml in self.iter() {
+            if replxml.file_name.eq(file_name) {
+                return true;
+            }
+        }
+        false
     }
 }

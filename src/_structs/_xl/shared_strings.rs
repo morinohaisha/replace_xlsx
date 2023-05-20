@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+pub const FILE_NAME: &'static str = "xl/sharedStrings.xml";
+
 /// `<t>`
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
 pub struct T {
@@ -36,6 +38,8 @@ pub struct sst {
     pub si: Option<Vec<si>>,
     #[serde(skip)]
     pub xml: Option<String>,
+    #[serde(skip)]
+    pub file_name: String,
 }
 
 #[cfg(test)]

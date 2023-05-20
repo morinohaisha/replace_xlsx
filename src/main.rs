@@ -6,15 +6,15 @@ use replace_xlsx::_structs::_xl::_worksheets::sheet::worksheet;
 use replace_xlsx::_structs::_xl::shared_strings;
 use replace_xlsx::_structs::content_types::Types;
 use replace_xlsx::_structs::input::{Input, Inputs};
-use replace_xlsx::_structs::replace::Replaces;
-use replace_xlsx::_structs::zip::XlsxReader;
-use replace_xlsx::_structs::zip::XlsxWriter;
+use replace_xlsx::_structs::replace::{Replaces, ReplaceXmls};
+use replace_xlsx::_structs::xlsx_reader::XlsxReader;
+use replace_xlsx::_structs::xlsx_writer::XlsxWriter;
 use replace_xlsx::_traits::content_types::AddType;
 use replace_xlsx::_traits::input::Convert;
-use replace_xlsx::_traits::replace::Extract;
-use replace_xlsx::_traits::replace::Replace;
-use replace_xlsx::_traits::zip::XlsxArchive;
-use replace_xlsx::_traits::zip::XlsxWrite;
+use replace_xlsx::_traits::replace::{Extract, Replace, IsSkip};
+use replace_xlsx::_traits::xlsx_reader::XlsxArchive;
+use replace_xlsx::_traits::xlsx_writer::XmlReplace;
+use replace_xlsx::_traits::xlsx_writer::XlsxWrite;
 use serde_json::from_str;
 use std::io;
 use zip::write::FileOptions;
@@ -30,45 +30,49 @@ struct Args {
 }
 
 fn main() {
-    let inputs = get_inputs().expect("Faild to input json error");
-    let mut replaces: Replaces = inputs.convert();
+
     let args: Args = Args::parse();
     let template: &str = args.template.as_str();
     let output: &str = args.out.as_str();
+    let inputs = get_inputs().expect("Faild to input json error");
 
     let mut reader: XlsxReader = XlsxReader::new(template).expect("Faild to Xlsx reader error");
+
+    let mut replaces: Replaces = inputs.convert();
     replaces
         .extract(&mut reader)
         .expect("Faild to extract error");
 
+    let mut replace_xmls: ReplaceXmls = Vec::new();
+
     let mut shared_strings: shared_strings::sst =
         shared_strings::sst::new(&mut reader).expect("Faild to create shared strings");
-    let shared_strings_xml = shared_strings
+    replace_xmls.push(shared_strings
         .replace(&replaces)
-        .expect("Faild to replace shared strings");
+        .expect("Faild to replace shared strings"));
 
     let mut drawing_relationships: DrawingRelationships =
         DrawingRelationships::new(1, &mut reader).expect("Faild to create drawing relationships");
-    let drawing_relationships_xml = drawing_relationships
+    replace_xmls.push(drawing_relationships
         .replace(&replaces)
-        .expect("Faild to replace drawing relationships");
+        .expect("Faild to replace drawing relationships"));
 
     let mut sheet_relationships: SheetRelationships =
         SheetRelationships::new(1, &mut reader).expect("Faild to create sheet relationships");
-    let sheet_relationships_xml = sheet_relationships
+    replace_xmls.push(sheet_relationships
         .replace(&replaces)
-        .expect("Faild to replace sheet relationships");
+        .expect("Faild to replace sheet relationships"));
 
     let mut xdr_ws_dr: XdrWsDr = XdrWsDr::new(1, &mut reader).expect("Faild to create xdr_ws_dr");
-    let xdr_ws_dr_xml = xdr_ws_dr
+    replace_xmls.push(xdr_ws_dr
         .replace(&replaces)
-        .expect("Faild to replace xdr_ws_dr");
+        .expect("Faild to replace xdr_ws_dr"));
 
     let mut worksheet: worksheet =
         worksheet::new(1, &mut reader).expect("Faild to create xdr_ws_dr");
-    let worksheet_xml = worksheet
+    replace_xmls.push(worksheet
         .replace(&replaces)
-        .expect("Faild to replace xdr_ws_dr");
+        .expect("Faild to replace xdr_ws_dr"));
 
     let mut content_types: Types = Types::new(&mut reader).expect("Faild to create content_types");
 
@@ -83,59 +87,19 @@ fn main() {
     // 書き出し処理
     for i in 0..reader.len() {
         let file = reader.by_index(i).unwrap();
+        let _ = content_types.add_override(file.name());
         if file.name() == "[Content_Types].xml" {
             continue;
-        }
-        let _ = content_types.add_override(file.name());
-        if file.name() == "xl/sharedStrings.xml" {
-            writer.start_file(file.name(), options).unwrap();
-            writer.write_all(shared_strings_xml.as_slice()).unwrap();
-        } else if file.name() == "xl/drawings/_rels/drawing1.xml.rels" {
-            writer.start_file(file.name(), options).unwrap();
-            writer
-                .write_all(drawing_relationships_xml.as_slice())
-                .unwrap();
-        } else if file.name() == "xl/drawings/drawing1.xml" {
-            writer.start_file(file.name(), options).unwrap();
-            writer.write_all(xdr_ws_dr_xml.as_slice()).unwrap();
-        } else if file.name() == "xl/worksheets/sheet1.xml" {
-            writer.start_file(file.name(), options).unwrap();
-            writer.write_all(worksheet_xml.as_slice()).unwrap();
+        } else if replace_xmls.is_skip(file.name()) {
+            continue;
         } else {
             writer.raw_copy_file(file).unwrap();
         }
     }
 
-    if reader.by_name("xl/drawings/drawing1.xml").is_err() {
-        writer
-            .start_file("xl/drawings/drawing1.xml", options)
-            .unwrap();
-        writer.write_all(xdr_ws_dr_xml.as_slice()).unwrap();
-        let _ = content_types.add_override("xl/drawings/drawing1.xml");
-    }
-    if reader
-        .by_name("xl/drawings/_rels/drawing1.xml.rels")
-        .is_err()
-    {
-        writer
-            .start_file("xl/drawings/_rels/drawing1.xml.rels", options)
-            .unwrap();
-        writer
-            .write_all(drawing_relationships_xml.as_slice())
-            .unwrap();
-        let _ = content_types.add_override("xl/drawings/_rels/drawing1.xml.rels");
-    }
-    if reader
-        .by_name("xl/worksheets/_rels/sheet1.xml.rels")
-        .is_err()
-    {
-        writer
-            .start_file("xl/worksheets/_rels/sheet1.xml.rels", options)
-            .unwrap();
-        writer
-            .write_all(sheet_relationships_xml.as_slice())
-            .unwrap();
-        let _ = content_types.add_override("xl/worksheets/_rels/sheet1.xml.rels");
+    for replace_xml in replace_xmls {
+        writer.replace_file(&replace_xml.file_name, replace_xml.xml, options).unwrap();
+        let _ = content_types.add_override(&replace_xml.file_name);
     }
 
     for replace in replaces.iter() {
@@ -157,8 +121,8 @@ fn main() {
     let content_types_xml = content_types
         .replace(&replaces)
         .expect("Faild to replace content_types");
-    writer.start_file("[Content_Types].xml", options).unwrap();
-    writer.write_all(content_types_xml.as_slice()).unwrap();
+    writer.start_file(&content_types_xml.file_name, options).unwrap();
+    writer.write_all(&content_types_xml.xml).unwrap();
 
     writer.finish().unwrap();
 }

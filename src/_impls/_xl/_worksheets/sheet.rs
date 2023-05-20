@@ -3,11 +3,12 @@ use crate::_structs::_xl::_worksheets::sheet::{drawing, C};
 use crate::_structs::cell::Cell;
 use crate::_structs::input::Input;
 use crate::_structs::xml::XmlReader;
-use crate::_structs::zip::XlsxReader;
+use crate::_structs::xlsx_reader::XlsxReader;
+use crate::_structs::replace::ReplaceXml;
 use crate::_traits::_xl::_worksheets::sheet::Row;
 use crate::_traits::_xl::_worksheets::sheet::Worksheet;
 use crate::_traits::replace::Replace;
-use crate::_traits::zip::XlsxArchive;
+use crate::_traits::xlsx_reader::XlsxArchive;
 use anyhow::Context;
 use quick_xml::de::from_str;
 use quick_xml::events::{BytesText, Event};
@@ -19,13 +20,14 @@ use std::io::{BufWriter, Cursor, Write};
 impl sheet::worksheet {
     pub fn new(num: u32, reader: &mut XlsxReader) -> anyhow::Result<sheet::worksheet> {
         let mut buf: String = String::new();
-        let file = format!("xl/worksheets/sheet{}.xml", num);
-        reader.get_file(&file, &mut buf)?;
+        let file_name = format!("xl/worksheets/sheet{}.xml", num);
+        reader.get_file(&file_name, &mut buf)?;
         let mut worksheet: sheet::worksheet = from_str(buf.as_str())?;
         worksheet.xml = Some(buf);
         worksheet.drawing = Some(vec![drawing {
             r_id: "rId1".to_string(),
         }]);
+        worksheet.file_name = file_name;
         Ok(worksheet)
     }
 }
@@ -76,7 +78,7 @@ impl Replace for sheet::worksheet {
     fn replace(
         &mut self,
         replaces: &crate::_structs::replace::Replaces,
-    ) -> anyhow::Result<Vec<u8>> {
+    ) -> anyhow::Result<ReplaceXml> {
         let mut writer = Writer::new(Cursor::new(Vec::<u8>::new()));
         let xml: String = self.xml.clone().context("xml is empty")?;
         let mut reader = XmlReader::new(&xml); // xml文字からreader生成
@@ -111,6 +113,6 @@ impl Replace for sheet::worksheet {
             }
             buf.clear();
         }
-        Ok(writer.into_inner().into_inner())
+        Ok(ReplaceXml {file_name: self.file_name.clone(), xml: writer.into_inner().into_inner()})
     }
 }

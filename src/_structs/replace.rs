@@ -11,3 +11,10 @@ pub struct Replace<'a> {
 }
 
 pub type Replaces<'a> = Vec<Replace<'a>>;
+
+pub struct ReplaceXml {
+    pub file_name: String,
+    pub xml: Vec<u8>,
+}
+
+pub type ReplaceXmls = Vec<ReplaceXml>;

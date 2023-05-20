@@ -5,4 +5,5 @@ pub mod image;
 pub mod input;
 pub mod replace;
 pub mod xml;
-pub mod zip;
+pub mod xlsx_writer;
+pub mod xlsx_reader;

@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 
+
+pub const FILE_NAME: &'static str = "xl/drawings/_rels/drawing{}.xml.rels";
+
 pub const XML_DECLARATION: &str = r#"<?xml version="1.0" encoding="UTF-8"?>"#;
 pub const RELATION_TYPE: &str =
     r#"http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"#;
@@ -15,6 +18,8 @@ pub struct Relationships {
     pub relationships: Option<Vec<Relationship>>,
     #[serde(skip)]
     pub xml: Option<String>,
+    #[serde(skip)]
+    pub file_name: String,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]

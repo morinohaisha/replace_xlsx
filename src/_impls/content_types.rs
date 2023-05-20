@@ -1,12 +1,13 @@
 use crate::_structs::content_types::{
-    ContentTypes, Default, Defaults, Override, Overrides, Types, CONTENT_TYPES,
+    ContentTypes, Default, Defaults, Override, Overrides, Types, CONTENT_TYPES,FILE_NAME
 };
 use crate::_structs::replace::Replaces;
 use crate::_structs::xml::XmlReader;
-use crate::_structs::zip::XlsxReader;
+use crate::_structs::xlsx_reader::XlsxReader;
+use crate::_structs::replace::ReplaceXml;
 use crate::_traits::content_types::{AddType, Contains};
 use crate::_traits::replace::Replace;
-use crate::_traits::zip::XlsxArchive;
+use crate::_traits::xlsx_reader::XlsxArchive;
 use anyhow::Context;
 use quick_xml::de::from_str;
 use quick_xml::events::{BytesText, Event};
@@ -19,11 +20,12 @@ use std::io::{BufWriter, Cursor, Write};
 impl Types {
     pub fn new(reader: &mut XlsxReader) -> anyhow::Result<Types> {
         let mut buf: String = String::new();
-        reader.get_file("[Content_Types].xml", &mut buf)?;
+        reader.get_file(FILE_NAME, &mut buf)?;
         let mut types: Types = from_str(buf.as_str())?;
         types.xml = Some(buf);
         types.set_content_types()?;
         types.reset_defaults()?;
+        types.file_name = FILE_NAME.to_string();
         Ok(types)
     }
 
@@ -111,7 +113,7 @@ impl AddType for Types {
 }
 
 impl Replace for Types {
-    fn replace(&mut self, _replaces: &Replaces) -> anyhow::Result<Vec<u8>> {
+    fn replace(&mut self, _replaces: &Replaces) -> anyhow::Result<ReplaceXml> {
         let mut writer = Writer::new(Cursor::new(Vec::<u8>::new()));
         let xml: String = self.xml.clone().context("xml is empty")?;
         let mut reader = XmlReader::new(&xml); // xml文字からreader生成
@@ -148,7 +150,7 @@ impl Replace for Types {
             }
             buf.clear();
         }
-        Ok(writer.into_inner().into_inner())
+        Ok(ReplaceXml {file_name: self.file_name.clone(), xml: writer.into_inner().into_inner()})
     }
 }
 

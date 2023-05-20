@@ -8,6 +8,8 @@ pub struct worksheet {
     pub drawing: Option<Vec<drawing>>,
     #[serde(skip)]
     pub xml: Option<String>,
+    #[serde(skip)]
+    pub file_name: String,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]

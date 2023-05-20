@@ -1,5 +1,5 @@
-use crate::_structs::replace::Replaces;
-use crate::_structs::zip::XlsxReader;
+use crate::_structs::replace::{Replaces, ReplaceXml};
+use crate::_structs::xlsx_reader::XlsxReader;
 
 pub trait Extract {
     fn extract(&mut self, reader: &mut XlsxReader) -> anyhow::Result<String>;
@@ -9,9 +9,13 @@ pub trait Extract {
 }
 
 pub trait Replace {
-    fn replace(&mut self, replaces: &Replaces) -> anyhow::Result<Vec<u8>>;
+    fn replace(&mut self, replaces: &Replaces) -> anyhow::Result<ReplaceXml>;
 }
 
 pub trait GetReplace {
     fn get(&mut self, index: u32) -> Option<u32>;
+}
+
+pub trait IsSkip {
+    fn is_skip(&self, file_name: &str) -> bool;
 }

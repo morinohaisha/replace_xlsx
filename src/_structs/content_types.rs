@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+pub const FILE_NAME: &'static str = "[Content_Types].xml";
 pub const CONTENT_TYPES: &str = "ContentTypes.toml";
 
 #[derive(Debug, Default, PartialEq, Deserialize)]
@@ -23,6 +24,8 @@ pub struct Types {
     pub xml: Option<String>,
     #[serde(skip)]
     pub content_types: ContentTypes,
+    #[serde(skip)]
+    pub file_name: String,
 }
 
 pub type Defaults = Vec<Default>;

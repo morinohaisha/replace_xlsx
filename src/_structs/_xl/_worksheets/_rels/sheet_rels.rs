@@ -14,6 +14,8 @@ pub struct Relationships {
     pub Relationship: Option<Vec<Relationship>>,
     #[serde(skip)]
     pub xml: Option<String>,
+    #[serde(skip)]
+    pub file_name: String,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]

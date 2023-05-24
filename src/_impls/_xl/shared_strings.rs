@@ -183,7 +183,7 @@ mod tests {
             <t>東京</t>
         </si>
         <si>
-            <t>#&lt;基本情報&gt;&lt;ほげ&gt;</t>
+            <t>#&lt;情報&gt;&lt;ほげ&gt;</t>
         </si>
         <si>
             <r>
@@ -203,7 +203,7 @@ mod tests {
                     <rFont val="Noto Sans CJK JP"/>
                     <family val="2"/>
                 </rPr>
-                <t xml:space="preserve">基本情報</t>
+                <t xml:space="preserve">情報</t>
             </r>
             <r>
                 <rPr>
@@ -241,8 +241,8 @@ mod tests {
     #[test]
     fn index() {
         let sst: sst = from_str::<sst>(XML).unwrap();
-        assert_eq!(sst.index("#<基本情報><ほげ>"), Some(11));
-        assert_eq!(sst.index("#<基本情報><ふが>"), None);
+        assert_eq!(sst.index("#<情報><ほげ>"), Some(11));
+        assert_eq!(sst.index("#<情報><ふが>"), None);
     }
 
     #[test]

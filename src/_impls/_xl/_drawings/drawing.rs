@@ -163,8 +163,8 @@ impl XdrOneCellAnchor {
                     cNvPr: XdrCNvPr {
                         id: 0,
                         name: name,
-                        descr: "".to_string(),
-                        v: "".to_string(),
+                        descr: None,
+                        v: None,
                     },
                     cNvPicPr: XdrCNvPicPr::default(),
                 },
@@ -172,7 +172,7 @@ impl XdrOneCellAnchor {
                     blip: ABlip {
                         cstate: None,
                         embed: embed,
-                        v: "".to_string(),
+                        v: None,
                     },
                     stretch: AStretch { fillRect: None },
                 },

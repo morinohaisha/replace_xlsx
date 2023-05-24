@@ -83,7 +83,7 @@ mod tests {
             <t>東京</t>
         </si>
         <si>
-            <t>#&lt;基本情報&gt;&lt;ほげ&gt;</t>
+            <t>#&lt;情報&gt;&lt;ほげ&gt;</t>
         </si>
         <si>
             <r>
@@ -103,7 +103,7 @@ mod tests {
                     <rFont val="Noto Sans CJK JP"/>
                     <family val="2"/>
                 </rPr>
-                <t xml:space="preserve">基本情報</t>
+                <t xml:space="preserve">情報</t>
             </r>
             <r>
                 <rPr>

@@ -115,9 +115,9 @@ pub struct XdrCNvPr {
     #[serde(rename = "@name")]
     pub name: String,
     #[serde(rename = "@descr")]
-    pub descr: String,
+    pub descr: Option<String>,
     #[serde(rename = "$text")]
-    pub v: String,
+    pub v: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]
@@ -148,7 +148,7 @@ pub struct ABlip {
     #[serde(rename(deserialize = "@embed", serialize = "@r:embed"))]
     pub embed: String,
     #[serde(rename = "$text")]
-    pub v: String,
+    pub v: Option<String>,
 }
 
 #[derive(Debug, PartialEq, Default, Serialize, Deserialize)]

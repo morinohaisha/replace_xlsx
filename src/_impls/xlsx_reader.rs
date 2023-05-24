@@ -1,12 +1,8 @@
 use crate::{
     _structs::xlsx_reader::XlsxReader,
-    _traits::xlsx_reader::XlsxArchive,
+    _traits::xlsx_reader::{XlsxArchive, XlsxGetFile},
 };
-use std::{
-    fs::File,
-    io::Read,
-    path::Path,
-};
+use std::{fs::File, io::Read, path::Path};
 use zip::{read::ZipFile, ZipArchive};
 
 impl XlsxReader {
@@ -18,7 +14,7 @@ impl XlsxReader {
     }
 }
 
-impl XlsxArchive for XlsxReader {
+impl XlsxGetFile for XlsxReader {
     fn get_file(&mut self, file_name: &str, buf: &mut String) -> anyhow::Result<String> {
         for i in 0..self.reader.len() {
             let mut file: ZipFile = self.reader.by_index(i)?;
@@ -37,7 +33,9 @@ impl XlsxArchive for XlsxReader {
     fn len(&self) -> usize {
         self.reader.len()
     }
+}
 
+impl XlsxArchive for XlsxReader {
     fn by_index(&mut self, file_number: usize) -> anyhow::Result<ZipFile> {
         Ok(self.reader.by_index(file_number)?)
     }
@@ -46,4 +44,3 @@ impl XlsxArchive for XlsxReader {
         Ok(self.reader.by_name(name)?)
     }
 }
-

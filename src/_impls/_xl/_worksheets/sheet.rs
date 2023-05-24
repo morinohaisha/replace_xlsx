@@ -2,9 +2,8 @@ use crate::_structs::_xl::_worksheets::sheet;
 use crate::_structs::_xl::_worksheets::sheet::{drawing, C};
 use crate::_structs::cell::Cell;
 use crate::_structs::input::Input;
-use crate::_structs::xml::XmlReader;
-use crate::_structs::xlsx_reader::XlsxReader;
 use crate::_structs::replace::ReplaceXml;
+use crate::_structs::xml::XmlReader;
 use crate::_traits::_xl::_worksheets::sheet::Row;
 use crate::_traits::_xl::_worksheets::sheet::Worksheet;
 use crate::_traits::replace::Replace;
@@ -18,7 +17,10 @@ use quick_xml::writer::Writer;
 use std::io::{BufWriter, Cursor, Write};
 
 impl sheet::worksheet {
-    pub fn new(num: u32, reader: &mut XlsxReader) -> anyhow::Result<sheet::worksheet> {
+    pub fn new<R>(num: u32, reader: &mut R) -> anyhow::Result<sheet::worksheet>
+    where
+        R: XlsxArchive,
+    {
         let mut buf: String = String::new();
         let file_name = format!("xl/worksheets/sheet{}.xml", num);
         reader.get_file(&file_name, &mut buf)?;
@@ -113,6 +115,9 @@ impl Replace for sheet::worksheet {
             }
             buf.clear();
         }
-        Ok(ReplaceXml {file_name: self.file_name.clone(), xml: writer.into_inner().into_inner()})
+        Ok(ReplaceXml {
+            file_name: self.file_name.clone(),
+            xml: writer.into_inner().into_inner(),
+        })
     }
 }

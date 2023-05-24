@@ -4,9 +4,8 @@ use crate::_structs::_xl::_drawings::drawing::{
     XdrRow, XdrRowOff, XdrSpPr, XdrWsDr, XMLNS_A, XMLNS_R, XMLNS_XDR, XML_DECLARATION,
 };
 use crate::_structs::input::Input;
-use crate::_structs::replace::{Replaces, ReplaceXml};
+use crate::_structs::replace::{ReplaceXml, Replaces};
 use crate::_structs::xml::XmlReader;
-use crate::_structs::xlsx_reader::XlsxReader;
 use crate::_traits::replace::Replace;
 use crate::_traits::xlsx_reader::XlsxArchive;
 use anyhow::Context;
@@ -18,7 +17,10 @@ use quick_xml::writer::Writer;
 use std::io::{BufWriter, Cursor, Write};
 
 impl XdrWsDr {
-    pub fn new(num: u32, reader: &mut XlsxReader) -> anyhow::Result<XdrWsDr> {
+    pub fn new<R>(num: u32, reader: &mut R) -> anyhow::Result<XdrWsDr>
+    where
+        R: XlsxArchive,
+    {
         let mut buf: String = String::new();
         let file_name = format!("xl/drawings/drawing{}.xml", num);
         reader.get_file(&file_name, &mut buf)?;
@@ -127,7 +129,10 @@ impl Replace for XdrWsDr {
             }
             buf.clear();
         }
-        Ok(ReplaceXml {file_name: self.file_name.clone(), xml: writer.into_inner().into_inner()})
+        Ok(ReplaceXml {
+            file_name: self.file_name.clone(),
+            xml: writer.into_inner().into_inner(),
+        })
     }
 }
 

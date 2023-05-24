@@ -3,13 +3,13 @@ use crate::_structs::_xl::_worksheets::sheet;
 use crate::_structs::_xl::shared_strings;
 use crate::_structs::image::Image;
 use crate::_structs::input::Input;
-use crate::_structs::replace::{Replace, Replaces, ReplaceXmls};
-use crate::_structs::xlsx_reader::XlsxReader;
+use crate::_structs::replace::{Replace, ReplaceXmls, Replaces};
 use crate::_traits::_xl::_worksheets::sheet::Worksheet;
 use crate::_traits::_xl::shared_strings::Sst;
 use crate::_traits::replace::Extract;
 use crate::_traits::replace::GetReplace;
 use crate::_traits::replace::IsSkip;
+use crate::_traits::xlsx_reader::XlsxArchive;
 
 impl Replace<'_> {
     pub fn new(input: &Input) -> Replace {
@@ -23,14 +23,20 @@ impl Replace<'_> {
 }
 
 impl Extract for Replaces<'_> {
-    fn extract(&mut self, reader: &mut XlsxReader) -> anyhow::Result<String> {
+    fn extract<R>(&mut self, reader: &mut R) -> anyhow::Result<String>
+    where
+        R: XlsxArchive,
+    {
         self.extract_index(reader)?;
         self.extract_cells(reader)?;
         self.setup_images(reader)?;
         Ok("".to_string())
     }
 
-    fn extract_index(&mut self, reader: &mut XlsxReader) -> anyhow::Result<String> {
+    fn extract_index<R>(&mut self, reader: &mut R) -> anyhow::Result<String>
+    where
+        R: XlsxArchive,
+    {
         let shared_strings: shared_strings::sst = shared_strings::sst::new(reader)?;
         for replace in self.iter_mut() {
             match replace.input {
@@ -41,7 +47,10 @@ impl Extract for Replaces<'_> {
         Ok("".to_string())
     }
 
-    fn extract_cells(&mut self, reader: &mut XlsxReader) -> anyhow::Result<String> {
+    fn extract_cells<R>(&mut self, reader: &mut R) -> anyhow::Result<String>
+    where
+        R: XlsxArchive,
+    {
         let sheet: sheet::worksheet = sheet::worksheet::new(1, reader)?;
         for replace in self.iter_mut() {
             match replace.index {
@@ -52,7 +61,10 @@ impl Extract for Replaces<'_> {
         Ok("".to_string())
     }
 
-    fn setup_images(&mut self, reader: &mut XlsxReader) -> anyhow::Result<String> {
+    fn setup_images<R>(&mut self, reader: &mut R) -> anyhow::Result<String>
+    where
+        R: XlsxArchive,
+    {
         let drawing_rels: drawing_rels::Relationships =
             drawing_rels::Relationships::new(1, reader)?;
         let mut index = drawing_rels

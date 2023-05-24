@@ -41,7 +41,12 @@ impl XlsxWrite for XlsxWriter {
 }
 
 impl XmlReplace for XlsxWriter {
-    fn replace_file(&mut self,  file_name: &str, xml: Vec<u8>, options: FileOptions) -> anyhow::Result<()> {
+    fn replace_file(
+        &mut self,
+        file_name: &str,
+        xml: Vec<u8>,
+        options: FileOptions,
+    ) -> anyhow::Result<()> {
         self.start_file(file_name, options)?;
         self.write_all(xml.as_slice())?;
         Ok(())

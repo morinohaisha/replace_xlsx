@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 pub const FILE_NAME: &'static str = "[Content_Types].xml";
 pub const CONTENT_TYPES: &str = "ContentTypes.toml";
+pub const DEFAULT_TYPES: [&'static str; 3] = ["rels", "xml", "jpeg"];
 
 #[derive(Debug, Default, PartialEq, Deserialize)]
 #[allow(non_snake_case)]

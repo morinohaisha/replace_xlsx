@@ -9,5 +9,10 @@ pub trait XlsxWrite {
 }
 
 pub trait XmlReplace {
-    fn replace_file(&mut self,  file_name: &str, xml: Vec<u8>, options: FileOptions) -> anyhow::Result<()>;
+    fn replace_file(
+        &mut self,
+        file_name: &str,
+        xml: Vec<u8>,
+        options: FileOptions,
+    ) -> anyhow::Result<()>;
 }

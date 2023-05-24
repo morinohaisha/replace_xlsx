@@ -1,11 +1,20 @@
-use crate::_structs::replace::{Replaces, ReplaceXml};
-use crate::_structs::xlsx_reader::XlsxReader;
+use crate::_structs::replace::{ReplaceXml, Replaces};
+
+use crate::_traits::xlsx_reader::XlsxArchive;
 
 pub trait Extract {
-    fn extract(&mut self, reader: &mut XlsxReader) -> anyhow::Result<String>;
-    fn extract_index(&mut self, reader: &mut XlsxReader) -> anyhow::Result<String>;
-    fn extract_cells(&mut self, reader: &mut XlsxReader) -> anyhow::Result<String>;
-    fn setup_images(&mut self, reader: &mut XlsxReader) -> anyhow::Result<String>;
+    fn extract<R>(&mut self, reader: &mut R) -> anyhow::Result<String>
+    where
+        R: XlsxArchive;
+    fn extract_index<R>(&mut self, reader: &mut R) -> anyhow::Result<String>
+    where
+        R: XlsxArchive;
+    fn extract_cells<R>(&mut self, reader: &mut R) -> anyhow::Result<String>
+    where
+        R: XlsxArchive;
+    fn setup_images<R>(&mut self, reader: &mut R) -> anyhow::Result<String>
+    where
+        R: XlsxArchive;
 }
 
 pub trait Replace {

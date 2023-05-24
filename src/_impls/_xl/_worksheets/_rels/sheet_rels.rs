@@ -2,9 +2,8 @@ use crate::_structs::_xl::_worksheets::_rels::sheet_rels::{
     Relationship, Relationships, RELATION_SHIPS_XMLNS, RELATION_TYPE, XML_DECLARATION,
 };
 use crate::_structs::input::Input;
-use crate::_structs::xml::XmlReader;
-use crate::_structs::xlsx_reader::XlsxReader;
 use crate::_structs::replace::ReplaceXml;
+use crate::_structs::xml::XmlReader;
 use crate::_traits::replace::Replace;
 use crate::_traits::xlsx_reader::XlsxArchive;
 use anyhow::Context;
@@ -16,7 +15,10 @@ use quick_xml::writer::Writer;
 use std::io::{BufWriter, Cursor, Write};
 
 impl Relationships {
-    pub fn new(num: u32, reader: &mut XlsxReader) -> anyhow::Result<Relationships> {
+    pub fn new<R>(num: u32, reader: &mut R) -> anyhow::Result<Relationships>
+    where
+        R: XlsxArchive,
+    {
         let mut buf: String = String::new();
         let file_name = format!("xl/worksheets/_rels/sheet{}.xml.rels", num);
         reader.get_file(&file_name, &mut buf)?;
@@ -86,6 +88,9 @@ impl Replace for Relationships {
             }
             buf.clear();
         }
-        Ok(ReplaceXml {file_name: self.file_name.clone(), xml: writer.into_inner().into_inner()})
+        Ok(ReplaceXml {
+            file_name: self.file_name.clone(),
+            xml: writer.into_inner().into_inner(),
+        })
     }
 }

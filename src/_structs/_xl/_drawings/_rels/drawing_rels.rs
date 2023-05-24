@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
 pub const FILE_NAME: &'static str = "xl/drawings/_rels/drawing{}.xml.rels";
 
 pub const XML_DECLARATION: &str = r#"<?xml version="1.0" encoding="UTF-8"?>"#;

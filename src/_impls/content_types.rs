@@ -1,13 +1,13 @@
 use crate::_structs::content_types::{
-    ContentTypes, Default, Defaults, Override, Overrides, Types, CONTENT_TYPES,FILE_NAME
+    ContentTypes, Default, Defaults, Override, Overrides, Types, CONTENT_TYPES, DEFAULT_TYPES,
+    FILE_NAME,
 };
+use crate::_structs::replace::ReplaceXml;
 use crate::_structs::replace::Replaces;
 use crate::_structs::xml::XmlReader;
-use crate::_structs::xlsx_reader::XlsxReader;
-use crate::_structs::replace::ReplaceXml;
 use crate::_traits::content_types::{AddType, Contains};
 use crate::_traits::replace::Replace;
-use crate::_traits::xlsx_reader::XlsxArchive;
+use crate::_traits::xlsx_reader::XlsxGetFile;
 use anyhow::Context;
 use quick_xml::de::from_str;
 use quick_xml::events::{BytesText, Event};
@@ -18,7 +18,10 @@ use std::fs;
 use std::io::{BufWriter, Cursor, Write};
 
 impl Types {
-    pub fn new(reader: &mut XlsxReader) -> anyhow::Result<Types> {
+    pub fn new<R>(reader: &mut R) -> anyhow::Result<Types>
+    where
+        R: XlsxGetFile,
+    {
         let mut buf: String = String::new();
         reader.get_file(FILE_NAME, &mut buf)?;
         let mut types: Types = from_str(buf.as_str())?;
@@ -37,9 +40,8 @@ impl Types {
     }
 
     fn reset_defaults(&mut self) -> anyhow::Result<()> {
-        let lst = vec!["rels", "xml", "jpeg"];
         self.defaults = Vec::<Default>::new();
-        for ext in lst.iter() {
+        for ext in DEFAULT_TYPES.iter() {
             self.add_default(ext)?;
         }
         Ok(())
@@ -150,12 +152,44 @@ impl Replace for Types {
             }
             buf.clear();
         }
-        Ok(ReplaceXml {file_name: self.file_name.clone(), xml: writer.into_inner().into_inner()})
+        Ok(ReplaceXml {
+            file_name: self.file_name.clone(),
+            xml: writer.into_inner().into_inner(),
+        })
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     #[test]
-//     fn test_replace() {}
-// }
+#[cfg(test)]
+mod tests {
+    use crate::{
+        _structs::content_types::{Types, DEFAULT_TYPES, FILE_NAME},
+        _traits::xlsx_reader::MockXlsxGetFile,
+    };
+
+    #[test]
+    fn test_replace() {
+        let xml = r#"
+        <Types xmlns="">
+        <Default Extension=""  ContentType=""/>
+        <Override PartName="" ContentType=""/>
+        </Types>"#;
+        let mut reader: MockXlsxGetFile = MockXlsxGetFile::new();
+        reader
+            .expect_get_file()
+            .times(1)
+            .returning(|_, buf| -> anyhow::Result<String> {
+                *buf += xml;
+                Ok("".to_string())
+            });
+        let types: Types = Types::new(&mut reader).unwrap();
+        assert_eq!(types.xml, Some(xml.to_string()));
+        assert_eq!(types.file_name, FILE_NAME.to_string());
+        for &ext in DEFAULT_TYPES.iter() {
+            assert!(types
+                .defaults
+                .iter()
+                .find(|&d| d.extension == ext)
+                .is_some());
+        }
+    }
+}

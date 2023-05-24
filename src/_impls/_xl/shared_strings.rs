@@ -1,9 +1,8 @@
 use crate::_structs::_xl::shared_strings::{self, si};
 use crate::_structs::input::Input;
-use crate::_structs::replace::Replaces;
 use crate::_structs::replace::ReplaceXml;
+use crate::_structs::replace::Replaces;
 use crate::_structs::xml::XmlReader;
-use crate::_structs::xlsx_reader::XlsxReader;
 use crate::_traits::_xl::shared_strings::{Si, Sst, T};
 use crate::_traits::replace::Replace;
 use crate::_traits::xlsx_reader::XlsxArchive;
@@ -16,7 +15,10 @@ use quick_xml::writer::Writer;
 use std::io::{BufWriter, Cursor, Write};
 
 impl shared_strings::sst {
-    pub fn new(reader: &mut XlsxReader) -> anyhow::Result<shared_strings::sst> {
+    pub fn new<R>(reader: &mut R) -> anyhow::Result<shared_strings::sst>
+    where
+        R: XlsxArchive,
+    {
         let mut buf: String = String::new();
         reader.get_file(shared_strings::FILE_NAME, &mut buf)?;
         let mut sst: shared_strings::sst = from_str(buf.as_str())?;
@@ -78,7 +80,10 @@ impl Replace for shared_strings::sst {
             }
             buf.clear();
         }
-        Ok(ReplaceXml {file_name: self.file_name.clone(), xml: writer.into_inner().into_inner()})
+        Ok(ReplaceXml {
+            file_name: self.file_name.clone(),
+            xml: writer.into_inner().into_inner(),
+        })
     }
 }
 
